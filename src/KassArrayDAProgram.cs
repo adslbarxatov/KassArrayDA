@@ -29,8 +29,10 @@ namespace RD_AAOW
 			// Проверка запуска единственной копии (псевдоним не должен совпадать с именем EventWaitHandle)
 			if (!RDGenerics.IsAppInstanceUnique (false, "_L"))
 				{
-				RDInterface.MessageBox (RDMessageFlags.Warning | RDMessageFlags.LockSmallSize | RDMessageFlags.CenterText,
-					"Программа " + ProgramDescription.AssemblyMainName + " уже запущена");
+				/*RDInterface.MessageBox (RDMessageFlags.Warning | RDMessageFlags.LockSmallSize | RDMessageFlags.CenterText,
+					"Программа " + ProgramDescription.AssemblyMainName + " уже запущена");*/
+				if (args.Length > 0)
+					KassArrayDB::RD_AAOW.KKTSupport.PathForStartupOpening = args[0];
 
 				try
 					{
@@ -63,7 +65,10 @@ namespace RD_AAOW
 				RDGenerics.RegisterFileAssociations (true);
 
 			// Запуск
-			Application.Run (new KassArrayDAForm ());
+			if (args.Length > 0)
+				Application.Run (new KassArrayDAForm (args[0]));
+			else
+				Application.Run (new KassArrayDAForm (""));
 			}
 		}
 	}

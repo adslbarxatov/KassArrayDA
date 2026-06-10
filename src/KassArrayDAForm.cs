@@ -12,9 +12,6 @@ namespace RD_AAOW
 	/// </summary>
 	public partial class KassArrayDAForm: Form
 		{
-		/*// Переменные и константы
-		private KassArrayDB::RD_AAOW.KnowledgeBase kb;*/
-
 		// Ресивер сообщений на повторное открытие окна
 		private EventWaitHandle ewh;
 
@@ -24,13 +21,14 @@ namespace RD_AAOW
 		/// <summary>
 		/// Конструктор. Запускает главную форму
 		/// </summary>
-		public KassArrayDAForm ()
+		/// <param name="FilePath">Путь к файлу для открытия из командной строки;
+		/// может быть пустой строкой</param>
+		public KassArrayDAForm (string FileName)
 			{
 			// Инициализация
 			InitializeComponent ();
 			RDGenerics.LoadWindowDimensions (this);
 
-			/*kb = new KassArrayDB::RD_AAOW.KnowledgeBase ();*/
 			this.Text = RDGenerics.DefaultAssemblyVisibleName;
 
 			// Подключение к прослушиванию системного события вызова окна
@@ -59,9 +57,6 @@ namespace RD_AAOW
 				}
 
 			// Настройка контролов
-			/*// !!! ТЕСТ
-			km = new KADAMath ("C:\\Users\\Бархатов Николай\\Desktop\\Первый ОФД", DataTemplates.ESKCompleteExport);
-			km.ExportUsableData ("TestExp.csv");*/
 			DataTemplateCombo.Items.AddRange (KADAMath.DataTemplateNames);
 			DataTemplateCombo.SelectedIndex = 0;
 
@@ -70,14 +65,29 @@ namespace RD_AAOW
 
 			RDLocale.SetDefaultControlText (MAbout, RDLDefaultTexts.Control_AppAbout);
 			RDLocale.SetDefaultControlText (MExit, RDLDefaultTexts.Button_Exit);
+			RDLocale.SetDefaultControlText (MOpen, RDLDefaultTexts.Button_Open);
+			RDLocale.SetDefaultControlText (MSave, RDLDefaultTexts.Button_Save);
 
 			SFDialog.Title = "Экспорт данных";
 			SFDialog.Filter = "Табличные данные (*.csv)|*.csv";
+			
+			KODialog.Title = "Загрузка ранее импортированных данных";
+			KSDialog.Title = "Сохранение импортированных данных";
+			KODialog.Filter = KSDialog.Filter = "Файл данных, извлечённых из выгрузок ОФД (*" +
+				KADAMath.DataFileExt + ")|*" + KADAMath.DataFileExt;
 
-			// Попытка загрузки автосохранения
-			km = new KADAMath ();
-			UpdateStatus ();
-			/*km.ExportUsableData ("TextExp.csv");*/
+			// Попытка открытия указанного файла
+			if (!string.IsNullOrWhiteSpace (FileName))
+				{
+				KODialog.FileName = FileName;
+				MOpen_Click (null, null);
+				}
+			else
+				{
+				// Попытка загрузки автосохранения
+				km = new KADAMath ();
+				UpdateStatus ();
+				}
 			}
 
 		// Обновление статуса
@@ -89,6 +99,14 @@ namespace RD_AAOW
 					" по " + km.MaximumDate.ToString (KADAMath.DateTimeFormat);
 			else
 				FastResultLabel.Text = "(импортируйте данные)";
+
+			DocTypeCombo.Items.Clear ();
+			DocTypeCombo.Items.AddRange (km.AvailableDocumentTypes);
+			DocTypeCombo.SelectedIndex = 0;
+
+			TaxCombo.Items.Clear ();
+			TaxCombo.Items.AddRange (km.AvailableTaxSystems);
+			TaxCombo.SelectedIndex = 0;
 			}
 
 		// Отображение справки
@@ -105,9 +123,16 @@ namespace RD_AAOW
 				return;
 
 			// Защита от лишних действий
-			if (this.Visible && (this.WindowState != FormWindowState.Minimized) || !ewh.WaitOne (100))
+			/*if (this.Visible && (this.WindowState != FormWindowState.Minimized) || !ewh.WaitOne (100))
 				{
-				ewh.Reset ();   // Удаление задвоенных вызовов
+				ewh.Reset ();	// Удаление задвоенных вызовов
+				return;
+				}*/
+			string path = KassArrayDB::RD_AAOW.KKTSupport.PathForStartupOpening;
+			if (string.IsNullOrWhiteSpace (path) && this.Visible &&
+				(this.WindowState != FormWindowState.Minimized) || !ewh.WaitOne (100))
+				{
+				ewh.Reset ();	// Удаление задвоенных вызовов
 				return;
 				}
 
@@ -120,6 +145,15 @@ namespace RD_AAOW
 			this.TopMost = true;
 			this.TopMost = false;
 			this.WindowState = FormWindowState.Normal;
+
+			// Запуск файла, если он был передан
+			if (!string.IsNullOrWhiteSpace (path))
+				{
+				KassArrayDB::RD_AAOW.KKTSupport.PathForStartupOpening = "";
+
+				KODialog.FileName = path;
+				MOpen_Click (null, null);
+				}
 			}
 
 		// Загрузка
@@ -134,6 +168,12 @@ namespace RD_AAOW
 			km = new KADAMath (FBDialog.SelectedPath, (DataTemplates)DataTemplateCombo.SelectedIndex);
 			UpdateStatus ();
 
+			CheckRollBack ();
+			}
+
+		// Откат к предыдущему сохранению
+		private void CheckRollBack ()
+			{
 			// Откат
 			if (km.HasErrors && (RDInterface.MessageBox (RDMessageFlags.Question | RDMessageFlags.CenterText,
 				"Восстановить данные предыдущей загрузки из резервной копии?",
@@ -165,13 +205,53 @@ namespace RD_AAOW
 			if (SFDialog.ShowDialog () != DialogResult.OK)
 				return;
 
-			if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex))
+			if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex,
+				(byte)DocTypeCombo.SelectedIndex, (byte)TaxCombo.SelectedIndex))
 				RDInterface.MessageBox (RDMessageFlags.Success | RDMessageFlags.CenterText,
 					"Экспорт выполнен успешно", 750);
 			else
 				RDInterface.MessageBox (RDMessageFlags.Warning | RDMessageFlags.CenterText | RDMessageFlags.LockSmallSize,
 					string.Format (RDLocale.GetDefaultText (RDLDefaultTexts.Message_SaveFailure_Fmt),
 					Path.GetFileName (SFDialog.FileName)));
+			}
+
+		// Открытие файла внутреннего формата
+		private void MOpen_Click (object sender, EventArgs e)
+			{
+			// Запрос имени файла
+			if ((sender != null) && (KODialog.ShowDialog () != DialogResult.OK))
+				return;
+
+			if (km != null)
+				km.Dispose ();
+			km = new KADAMath (KODialog.FileName);
+			UpdateStatus ();
+
+			if (!km.HasErrors)
+				RDInterface.MessageBox (RDMessageFlags.Success | RDMessageFlags.CenterText,
+					"Файл успешно загружен", 750);
+			else
+				RDInterface.MessageBox (RDMessageFlags.Warning | RDMessageFlags.CenterText | RDMessageFlags.LockSmallSize,
+					string.Format (RDLocale.GetDefaultText (RDLDefaultTexts.Message_LoadFailure_Fmt),
+					Path.GetFileName (KODialog.FileName)));
+
+			CheckRollBack ();
+			}
+
+		// Сохранение файла внутреннего формата
+		private void MSave_Click (object sender, EventArgs e)
+			{
+			// Запрос имени файла
+			if (KSDialog.ShowDialog () != DialogResult.OK)
+				return;
+
+			if (km.SaveData (KSDialog.FileName))
+				RDInterface.MessageBox (RDMessageFlags.Success | RDMessageFlags.CenterText,
+					"Файл успешно сохранён", 750);
+			else
+				RDInterface.MessageBox (RDMessageFlags.Warning | RDMessageFlags.CenterText | RDMessageFlags.LockSmallSize,
+					string.Format (RDLocale.GetDefaultText (RDLDefaultTexts.Message_SaveFailure_Fmt),
+					Path.GetFileName (KSDialog.FileName)));
 			}
 		}
 	}
