@@ -73,8 +73,10 @@ namespace RD_AAOW
 			
 			KODialog.Title = "Загрузка ранее импортированных данных";
 			KSDialog.Title = "Сохранение импортированных данных";
-			KODialog.Filter = KSDialog.Filter = "Файл данных, извлечённых из выгрузок ОФД (*" +
+			KODialog.Filter = KSDialog.Filter = "Файлы данных, извлечённых из выгрузок ОФД (*" +
 				KADAMath.DataFileExt + ")|*" + KADAMath.DataFileExt;
+			KODialog.Filter += "|Файлы данных, загруженных из ФН (*" + FSDInterface.FileExtension +
+				")|*" + FSDInterface.FileExtension;
 
 			// Попытка открытия указанного файла
 			if (!string.IsNullOrWhiteSpace (FileName))
@@ -123,11 +125,6 @@ namespace RD_AAOW
 				return;
 
 			// Защита от лишних действий
-			/*if (this.Visible && (this.WindowState != FormWindowState.Minimized) || !ewh.WaitOne (100))
-				{
-				ewh.Reset ();	// Удаление задвоенных вызовов
-				return;
-				}*/
 			string path = KassArrayDB::RD_AAOW.KKTSupport.PathForStartupOpening;
 			if (string.IsNullOrWhiteSpace (path) && this.Visible &&
 				(this.WindowState != FormWindowState.Minimized) || !ewh.WaitOne (100))
@@ -224,7 +221,7 @@ namespace RD_AAOW
 
 			if (km != null)
 				km.Dispose ();
-			km = new KADAMath (KODialog.FileName);
+			km = new KADAMath (KODialog.FileName, KODialog.FileName.EndsWith (FSDInterface.FileExtension));
 			UpdateStatus ();
 
 			if (!km.HasErrors)
