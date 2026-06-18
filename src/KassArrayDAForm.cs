@@ -78,6 +78,10 @@ namespace RD_AAOW
 			KODialog.Filter += "|Файлы данных, загруженных из ФН (*" + FSDInterface.FileExtension +
 				")|*" + FSDInterface.FileExtension;
 
+			DocTypeCombo.Items.Add ("Продажи минус возвраты");
+			DocTypeCombo.Items.Add ("Продажи и возвраты отдельно");
+			DocTypeCombo.SelectedIndex = 0;
+
 			// Попытка открытия указанного файла
 			if (!string.IsNullOrWhiteSpace (FileName))
 				{
@@ -102,13 +106,17 @@ namespace RD_AAOW
 			else
 				FastResultLabel.Text = "(импортируйте данные)";
 
-			DocTypeCombo.Items.Clear ();
+			/*DocTypeCombo.Items.Clear ();
 			DocTypeCombo.Items.AddRange (km.AvailableDocumentTypes);
-			DocTypeCombo.SelectedIndex = 0;
+			DocTypeCombo.SelectedIndex = 0;*/
 
 			TaxCombo.Items.Clear ();
 			TaxCombo.Items.AddRange (km.AvailableTaxSystems);
 			TaxCombo.SelectedIndex = 0;
+
+			SessionCombo.Items.Clear ();
+			SessionCombo.Items.AddRange (km.AvailableSessionNumbers);
+			SessionCombo.SelectedIndex = 0;
 			}
 
 		// Отображение справки
@@ -203,7 +211,7 @@ namespace RD_AAOW
 				return;
 
 			if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex,
-				(byte)DocTypeCombo.SelectedIndex, (byte)TaxCombo.SelectedIndex))
+				DocTypeCombo.SelectedIndex == 1, (byte)TaxCombo.SelectedIndex, (uint)SessionCombo.SelectedIndex))
 				RDInterface.MessageBox (RDMessageFlags.Success | RDMessageFlags.CenterText,
 					"Экспорт выполнен успешно", 750);
 			else
