@@ -70,7 +70,7 @@ namespace RD_AAOW
 
 			SFDialog.Title = "Экспорт данных";
 			SFDialog.Filter = "Табличные данные (*.csv)|*.csv";
-			
+
 			KODialog.Title = "Загрузка ранее импортированных данных";
 			KSDialog.Title = "Сохранение импортированных данных";
 			KODialog.Filter = KSDialog.Filter = "Файлы данных, извлечённых из выгрузок ОФД (*" +
@@ -106,10 +106,6 @@ namespace RD_AAOW
 			else
 				FastResultLabel.Text = "(импортируйте данные)";
 
-			/*DocTypeCombo.Items.Clear ();
-			DocTypeCombo.Items.AddRange (km.AvailableDocumentTypes);
-			DocTypeCombo.SelectedIndex = 0;*/
-
 			TaxCombo.Items.Clear ();
 			TaxCombo.Items.AddRange (km.AvailableTaxSystems);
 			TaxCombo.SelectedIndex = 0;
@@ -117,6 +113,14 @@ namespace RD_AAOW
 			SessionCombo.Items.Clear ();
 			SessionCombo.Items.AddRange (km.AvailableSessionNumbers);
 			SessionCombo.SelectedIndex = 0;
+
+			StartDateField.MinDate = EndDateField.MinDate = LibrarySupport.MinimumDatePickerValue;
+			StartDateField.MaxDate = EndDateField.MaxDate = RDGenerics.MaximumDatePickerValue;
+			StartDateField.MinDate = EndDateField.MinDate = km.MinimumDate;
+			StartDateField.MaxDate = EndDateField.MaxDate = km.MaximumDate;
+
+			StartDateField.Value = StartDateField.MinDate;
+			EndDateField.Value = EndDateField.MaxDate;
 			}
 
 		// Отображение справки
@@ -137,7 +141,7 @@ namespace RD_AAOW
 			if (string.IsNullOrWhiteSpace (path) && this.Visible &&
 				(this.WindowState != FormWindowState.Minimized) || !ewh.WaitOne (100))
 				{
-				ewh.Reset ();	// Удаление задвоенных вызовов
+				ewh.Reset ();   // Удаление задвоенных вызовов
 				return;
 				}
 
@@ -210,14 +214,26 @@ namespace RD_AAOW
 			if (SFDialog.ShowDialog () != DialogResult.OK)
 				return;
 
-			if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex,
-				DocTypeCombo.SelectedIndex == 1, (byte)TaxCombo.SelectedIndex, (uint)SessionCombo.SelectedIndex))
+			ExportFilterSettings flt;
+			flt.UseDocumentTypeSplit = (DocTypeCombo.SelectedIndex == 1);
+			flt.SessionNumberFilterIndex = (uint)SessionCombo.SelectedIndex;
+			flt.TaxSystemFilterIndex = (byte)TaxCombo.SelectedIndex;
+			flt.MinDate = StartDateField.Value;
+			flt.MaxDate = EndDateField.Value;
+
+			/*if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex,
+				DocTypeCombo.SelectedIndex == 1, (byte)TaxCombo.SelectedIndex, (uint)SessionCombo.SelectedIndex))*/
+			if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex, flt))
+				{
 				RDInterface.MessageBox (RDMessageFlags.Success | RDMessageFlags.CenterText,
 					"Экспорт выполнен успешно", 750);
+				}
 			else
+				{
 				RDInterface.MessageBox (RDMessageFlags.Warning | RDMessageFlags.CenterText | RDMessageFlags.LockSmallSize,
 					string.Format (RDLocale.GetDefaultText (RDLDefaultTexts.Message_SaveFailure_Fmt),
 					Path.GetFileName (SFDialog.FileName)));
+				}
 			}
 
 		// Открытие файла внутреннего формата
@@ -257,6 +273,23 @@ namespace RD_AAOW
 				RDInterface.MessageBox (RDMessageFlags.Warning | RDMessageFlags.CenterText | RDMessageFlags.LockSmallSize,
 					string.Format (RDLocale.GetDefaultText (RDLDefaultTexts.Message_SaveFailure_Fmt),
 					Path.GetFileName (KSDialog.FileName)));
+			}
+
+		// Кнопки сброса настроек фильтрации
+		private void ResetDateButton_Click (object sender, EventArgs e)
+			{
+			StartDateField.Value = StartDateField.MinDate;
+			EndDateField.Value = EndDateField.MaxDate;
+			}
+
+		private void ResetSessionButton_Click (object sender, EventArgs e)
+			{
+			SessionCombo.SelectedIndex = 0;
+			}
+
+		private void ResetTaxButton_Click (object sender, EventArgs e)
+			{
+			TaxCombo.SelectedIndex = 0;
 			}
 		}
 	}
