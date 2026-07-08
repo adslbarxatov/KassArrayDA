@@ -221,8 +221,6 @@ namespace RD_AAOW
 			flt.MinDate = StartDateField.Value;
 			flt.MaxDate = EndDateField.Value;
 
-			/*if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex,
-				DocTypeCombo.SelectedIndex == 1, (byte)TaxCombo.SelectedIndex, (uint)SessionCombo.SelectedIndex))*/
 			if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex, flt))
 				{
 				RDInterface.MessageBox (RDMessageFlags.Success | RDMessageFlags.CenterText,
