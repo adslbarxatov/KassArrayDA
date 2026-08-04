@@ -68,11 +68,11 @@ namespace RD_AAOW
 			RDLocale.SetDefaultControlText (MOpen, RDLDefaultTexts.Button_Open);
 			RDLocale.SetDefaultControlText (MSave, RDLDefaultTexts.Button_Save);
 
-			SFDialog.Title = "Экспорт данных";
+			/*SFDialog. Title = "Экспорт данных";*/
 			SFDialog.Filter = "Табличные данные (*.csv)|*.csv";
 
-			KODialog.Title = "Загрузка ранее импортированных данных";
-			KSDialog.Title = "Сохранение импортированных данных";
+			/*KODialog. Title = "Загрузка ранее импортированных данных";
+			KSDialog. Title = "Сохранение импортированных данных";*/
 			KODialog.Filter = KSDialog.Filter = "Файлы данных, извлечённых из выгрузок ОФД (*" +
 				KADAMath.DataFileExt + ")|*" + KADAMath.DataFileExt;
 			KODialog.Filter += "|Файлы данных, загруженных из ФН (*" + FSDInterface.FileExtension +
@@ -221,6 +221,15 @@ namespace RD_AAOW
 			flt.MinDate = StartDateField.Value;
 			flt.MaxDate = EndDateField.Value;
 
+			if (MinSummaFlag.Checked)
+				flt.MinSumma = (long)(MinSummaField.Value * 100.0M);
+			else
+				flt.MinSumma = -1;
+			if (MaxSummaFlag.Checked)
+				flt.MaxSumma = (long)(MaxSummaField.Value * 100.0M);
+			else
+				flt.MaxSumma = -1;
+
 			if (km.ExportData (SFDialog.FileName, (ExportTemplates)ExportTemplateCombo.SelectedIndex, flt))
 				{
 				RDInterface.MessageBox (RDMessageFlags.Success | RDMessageFlags.CenterText,
@@ -288,6 +297,17 @@ namespace RD_AAOW
 		private void ResetTaxButton_Click (object sender, EventArgs e)
 			{
 			TaxCombo.SelectedIndex = 0;
+			}
+
+		// Включение / выключение ограничений по суммам чеков
+		private void MinSummaFlag_CheckedChanged (object sender, EventArgs e)
+			{
+			MinSummaField.Enabled = MinSummaFlag.Checked;
+			}
+
+		private void MaxSummaFlag_CheckedChanged (object sender, EventArgs e)
+			{
+			MaxSummaField.Enabled = MaxSummaFlag.Checked;
 			}
 		}
 	}
