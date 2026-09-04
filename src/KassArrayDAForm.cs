@@ -68,11 +68,7 @@ namespace RD_AAOW
 			RDLocale.SetDefaultControlText (MOpen, RDLDefaultTexts.Button_Open);
 			RDLocale.SetDefaultControlText (MSave, RDLDefaultTexts.Button_Save);
 
-			/*SFDialog. Title = "Экспорт данных";*/
 			SFDialog.Filter = "Табличные данные (*.csv)|*.csv";
-
-			/*KODialog. Title = "Загрузка ранее импортированных данных";
-			KSDialog. Title = "Сохранение импортированных данных";*/
 			KODialog.Filter = KSDialog.Filter = "Файлы данных, извлечённых из выгрузок ОФД (*" +
 				KADAMath.DataFileExt + ")|*" + KADAMath.DataFileExt;
 			KODialog.Filter += "|Файлы данных, загруженных из ФН (*" + FSDInterface.FileExtension +
