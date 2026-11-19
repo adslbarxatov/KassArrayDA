@@ -69,10 +69,13 @@ namespace RD_AAOW
 			RDLocale.SetDefaultControlText (MSave, RDLDefaultTexts.Button_Save);
 
 			SFDialog.Filter = "Табличные данные (*.csv)|*.csv";
+
 			KODialog.Filter = KSDialog.Filter = "Файлы данных, извлечённых из выгрузок ОФД (*" +
 				KADAMath.DataFileExt + ")|*" + KADAMath.DataFileExt;
 			KODialog.Filter += "|Файлы данных, загруженных из ФН (*" + FSDInterface.FileExtension +
 				")|*" + FSDInterface.FileExtension;
+
+			OFDialog.Filter = "Файлы выгрузок ОФД (" + KADAMath.ImportExtension + ")|" + KADAMath.ImportExtension;
 
 			DocTypeCombo.Items.Add ("Продажи минус возвраты");
 			DocTypeCombo.Items.Add ("Продажи и возвраты отдельно");
@@ -165,12 +168,35 @@ namespace RD_AAOW
 		private void BLoad_Click (object sender, EventArgs e)
 			{
 			// Подготовка
-			if (FBDialog.ShowDialog () != DialogResult.OK)
-				return;
+			RDMessageButtons res = RDInterface.MessageBox (RDMessageFlags.Question |
+				RDMessageFlags.CenterText | RDMessageFlags.LockSmallSize,
+				"Требуется загрузить один файл выгрузки или директорию с несколькими файлами?",
+				"Один файл", "Директория", RDLocale.GetDefaultText (RDLDefaultTexts.Button_Cancel));
+
+			bool asFile = false;
+			switch (res)
+				{
+				case RDMessageButtons.ButtonThree:
+				default:
+					return;
+
+				case RDMessageButtons.ButtonTwo:
+					if (FBDialog.ShowDialog () != DialogResult.OK)
+						return;
+					break;
+
+				case RDMessageButtons.ButtonOne:
+					if (OFDialog.ShowDialog () != DialogResult.OK)
+						return;
+
+					asFile = true;
+					break;
+				}
 
 			// Запуск
 			km.Dispose ();
-			km = new KADAMath (FBDialog.SelectedPath, (DataTemplates)DataTemplateCombo.SelectedIndex);
+			km = new KADAMath (asFile ? OFDialog.FileName : FBDialog.SelectedPath,
+				asFile, (DataTemplates)DataTemplateCombo.SelectedIndex);
 			UpdateStatus ();
 
 			CheckRollBack ();
